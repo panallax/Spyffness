@@ -1,5 +1,6 @@
 import numpy as np
 import networkx as nx
+from scipy import sparse
 
 from Spyffness.Beam import Beam
 from Spyffness.Node import Node
@@ -15,7 +16,7 @@ class Frame():
 
     def addMaterial(self, form_config= True, E= None, Iy= None, Iz= None, G= None, J= None, A= None):
         if form_config:
-            self.Material = Material()
+            self.Material = Material(True)
         else:
             self.Material = Material(False, E, Iy, Iz, G, J, A)
 
@@ -61,13 +62,13 @@ class Frame():
         n = len(self.Nodes)
         k = np.zeros((6*n, 6*n))
         for beam in self.Beams.values():
-            kloc = beam.Kglob()
+            kglob = beam.Kglob()
             i = beam.node1.ID
             j = beam.node2.ID
-            k[6*i:6*i+6, 6*i:6*i+6] += kloc[:6,:6]
-            k[6*j:6*j+6, 6*j:6*j+6] += kloc[6:,6:]
-            k[6*i:6*i+6, 6*j:6*j+6] += kloc[:6,6:]
-            k[6*j:6*j+6, 6*i:6*i+6] += kloc[6:,:6]
+            k[6*i:6*i+6, 6*i:6*i+6] += kglob[:6,:6]
+            k[6*j:6*j+6, 6*j:6*j+6] += kglob[6:,6:]
+            k[6*i:6*i+6, 6*j:6*j+6] += kglob[:6,6:]
+            k[6*j:6*j+6, 6*i:6*i+6] += kglob[6:,:6]
 
         return k
     
@@ -130,11 +131,12 @@ class Frame():
     
     def solve(self):
         k = self.K()
+        # print(sparse.csr_matrix(k))
         supports = self.__getSupports()
         loads = self.__getLoads()
+
         displacements = self.__getDisplacements()
         reactions = self.__getReactions()
-
         free = np.where(supports == 1)[0]
         fixed = np.where(supports == 0)[0]
         kfree = k[free,:][:,free]
@@ -142,7 +144,10 @@ class Frame():
 
         loads = loads[free]
         displacements[free] = np.linalg.solve(kfree, loads)
+        print(displacements)
+
         reactions[fixed] = np.dot(kfixed, displacements[fixed])
+        print(reactions)
         self.__setDisplacements(displacements)
         self.__setReactions(reactions)
 

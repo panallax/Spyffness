@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "Spyffness"
+version = "0.1.1"
+description = "A Python library for structural analysis"
+authors = [
+    { name = "Alex Bernadí" }
+]
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+license-files = ["LICENSE"]
+dependencies = [
+    "numpy>=1.20.0",
+    "scipy>=1.6.0",
+    "networkx"
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[tool.setuptools]
+packages = ["Spyffness"]
+license-files = ["LICENSE"]

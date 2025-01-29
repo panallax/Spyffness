@@ -4,7 +4,7 @@ class Beam():
 
     def __init__(self, ID, node1, node2, material, A= None):
 
-        self.ID = id
+        self.ID = ID
         self.node1 = node1
         self.node2 = node2
 
@@ -23,6 +23,9 @@ class Beam():
         return self.node1.distance(self.node2)
     
     def Kloc(self):
+        """
+        Local stiffness matrix
+        """
         A = self.A
         E = self.E
         Iz = self.Iz
@@ -31,33 +34,26 @@ class Beam():
         J = self.J
         L = self.L()
 
-        k = np.zeros((12,12))
-        k11 = k22 = np.array([[A*E/L,  0,             0,             0,      0,            0],
-                        [0,      12*E*Iz/L**3,  0,             0,      0,            6*E*Iz/L**2],
-                        [0,      0,             12*E*Iy/L**3,  0,      -6*E*Iy/L**2, 0],
-                        [0,      0,             0,             G*J/L,  0,            0],
-                        [0,      0,             -6*E*Iy/L**2,  0,      4*E*Iy/L,     0],
-                        [0,      6*E*Iz/L**2,   0,             0,      0,            4*E*Iz/L]])
-
-        k12 = np.array([[-A*E/L,  0,             0,             0,      0,            0],
-                        [0,      -12*E*Iz/L**3,  0,             0,      0,            6*E*Iz/L**2],
-                        [0,      0,             -12*E*Iy/L**3,  0,      -6*E*Iy/L**2, 0],
-                        [0,      0,             0,             -G*J/L,  0,            0],
-                        [0,      0,             6*E*Iy/L**2,  0,      2*E*Iy/L,     0],
-                        [0,      -6*E*Iz/L**2,   0,             0,      0,            2*E*Iz/L]])
-
-        k21 = np.transpose(k12)
-
-        k[:6,:6] = k11
-        k[6:,6:] = k22
-        k[:6,6:] = k12
-        k[6:,:6] = k21
+        k = np.array([[A*E/L,  0,             0,             0,      0,            0,            -A*E/L, 0,             0,             0,      0,            0],
+                    [0,      12*E*Iz/L**3,  0,             0,      0,            6*E*Iz/L**2,  0,      -12*E*Iz/L**3, 0,             0,      0,            6*E*Iz/L**2],
+                    [0,      0,             12*E*Iy/L**3,  0,      -6*E*Iy/L**2, 0,            0,      0,             -12*E*Iy/L**3, 0,      -6*E*Iy/L**2, 0],
+                    [0,      0,             0,             G*J/L,  0,            0,            0,      0,             0,             -G*J/L, 0,            0],
+                    [0,      0,             -6*E*Iy/L**2,  0,      4*E*Iy/L,     0,            0,      0,             6*E*Iy/L**2,   0,      2*E*Iy/L,     0],
+                    [0,      6*E*Iz/L**2,   0,             0,      0,            4*E*Iz/L,     0,      -6*E*Iz/L**2,  0,             0,      0,            2*E*Iz/L],
+                    [-A*E/L, 0,             0,             0,      0,            0,            A*E/L,  0,             0,             0,      0,            0],
+                    [0,      -12*E*Iz/L**3, 0,             0,      0,            -6*E*Iz/L**2, 0,      12*E*Iz/L**3,  0,             0,      0,            -6*E*Iz/L**2],
+                    [0,      0,             -12*E*Iy/L**3, 0,      6*E*Iy/L**2,  0,            0,      0,             12*E*Iy/L**3,  0,      6*E*Iy/L**2,  0],
+                    [0,      0,             0,             -G*J/L, 0,            0,            0,      0,             0,             G*J/L,  0,            0],
+                    [0,      0,             -6*E*Iy/L**2,  0,      2*E*Iy/L,     0,            0,      0,             6*E*Iy/L**2,   0,      4*E*Iy/L,     0],
+                    [0,      6*E*Iz/L**2,   0,             0,      0,            2*E*Iz/L,     0,      -6*E*Iz/L**2,  0,             0,      0,            4*E*Iz/L]])
 
         return k
     
  
     def T(self):
-
+        """
+        Transformation matrix
+        """
         x1, y1, z1 = self.node1.coords
         x2, y2, z2 = self.node2.coords
         L = self.L()
@@ -99,11 +95,32 @@ class Beam():
         return T
     
     def Kglob(self):
-        return np.matmul(np.matmul(np.inv(self.T()), self.Kloc()), self.T())
+        """
+        Global stiffness matrix
+        """
+        return np.matmul(np.matmul(np.linalg.inv(self.T()), self.Kloc()), self.T())
 
     
     def nodalLoadVector(self):
-        return np.matmul(np.matmul(self.Kloc(), np.inv(self.Ta)), self.D())
+        """
+        Nodal load vector in global coordinates
+        """
+        return np.matmul(np.matmul(self.Kloc(), np.linalg.inv(self.Ta)), self.D())
     
     def D(self):
+        """
+        Displacement vector in global coordinates
+        """
         return np.append(self.node1.Displacements, self.node2.Displacements)
+    
+    def Dloc(self):
+        """
+        Displacement vector in local coordinates
+        """
+        return np.matmul(np.linalg.inv(self.Ta), self.D())
+    
+    def Floc(self):
+        """
+        Force vector in local coordinates
+        """
+        return np.matmul(self.Kloc(), self.Dloc())
