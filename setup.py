@@ -9,6 +9,7 @@ setup(
         "networkx",
         "scipy",
     ],
+    py_modules=["config"],
     author="Alex Bernadí",
     description="A Python library for structural analysis",
     long_description=open("README.md").read(),

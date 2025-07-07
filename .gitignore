@@ -21,6 +21,7 @@ wheels/
 *.egg
 Spyffness/_version.py
 pypirc/*
+~/.*
 
 # IDE
 .idea/

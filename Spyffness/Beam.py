@@ -15,9 +15,19 @@ class Beam():
         self.J = material.J
 
         if not A:
-            self.A = material.A
+            self._A = material.A
+        else:
+            self._A = A
 
         self.Ta = self.T()
+    
+    @property
+    def A(self):
+        return self._A
+    
+    @A.setter
+    def A(self, value):
+        self._A = value
     
     def L(self):
         return self.node1.distance(self.node2)
